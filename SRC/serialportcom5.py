@@ -1,3 +1,6 @@
 import serial.tools.list_ports
 for port in serial.tools.list_ports.comports():
     print(f"Python sees: {port.device} - {port.description}")
+
+    #needed to check if all ports were visible to python
+    
