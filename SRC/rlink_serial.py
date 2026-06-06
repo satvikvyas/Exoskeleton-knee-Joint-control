@@ -18,7 +18,7 @@ BAUD_RATE = 921600  # The standard RLink V2 operating speed
 # Example format: "AA 55 01 FF FF FF FF FF FF FF FC 8B"
 
 
-WAKE_COMMAND_HEX = "FF FF FF FF FF FF FF FC" # Placeholder - Needs RLink Wrapper Bytes!
+WAKE_COMMAND_HEX = "FF FF FF FF FF FF FF F" # Placeholder - Needs RLink Wrapper Bytes!
 
 
 
