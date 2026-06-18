@@ -57,9 +57,8 @@ sys_c = ct.ss(A_c, B_c, C_c, D_c)
 sys_d = sys_c.sample(dt, method='zoh')
 B_dd = B_dist * dt
 
-# ==========================================
 # 4. INITIALIZATION (CASCADE PID SETUP)
-# ==========================================
+
 x = py.array([[0.0], [0.0], [0.0]]) # [pos, omega, current]
 
 # OUTER LOOP: Position Controller (Outputs Amps)
@@ -67,7 +66,7 @@ x = py.array([[0.0], [0.0], [0.0]]) # [pos, omega, current]
 pos_pid = pid(kp=50.0, kd=0.5, ki=5.0) 
 
 # INNER LOOP: Current Controller (Outputs Volts)
-# Current loops use PI, heavily relying on Proportional gain
+
 current_pi = pid(kp=20.0, kd=0.0, ki=1.0)
 
 history_t = []
@@ -129,9 +128,8 @@ for step in range(steps):
     history_joint_pos.append(joint_pos)
     history_current.append(actual_current)
 
-# ==========================================
-# 6. PLOTTING RESULTS
-# ==========================================
+# 6. PLOTTING 
+
 plt.figure(figsize=(10, 8))
 
 # Plot Position (Joint Angle)
