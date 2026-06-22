@@ -4,18 +4,18 @@ class referencem:
         self.w = w
         self.dt= dt
 
-        self.theta_p = 0.0
+        self.theta_model = 0.0
         self.theta_v = 0.0
 
     def update(self, r):
      #step 1
-        self.theta_a = (self.w**2)*(r-self.theta_p) - 2*self.z*self.w*self.theta_v
+        self.theta_a = (self.w**2)*(r-self.theta_model) - 2*self.z*self.w*self.theta_v
      #step 2
         self.theta_v += self.theta_a*self.dt
      #step 3
-        self.theta_p += self.theta_v*self.dt
+        self.theta_model += self.theta_v*self.dt
 
-        return self.theta_p ,self.theta_v
+        return self.theta_model ,self.theta_v
                #position      #velocity
 
 
