@@ -33,43 +33,41 @@ N = 50.0          # Gear ratio
 j_load = m * (leg_length ** 2)
 j_eff = j + (j_load / (N ** 2))
 
-# # ==========================================
-# # 3. STATE-SPACE MATRICES
-# # ==========================================
-# # FIXED: Using j_eff instead of j
-
-# A_c = py.array([[0, 1 , 0],
-#                 [0, -b/j_eff, kt/j_eff],
-#                 [0, -ke/l, -r/l]])
-
-# B_c = py.array([[0],   
-#                 [0],
-#                 [1/l]])
-
-# C_c = py.array([[1.0, 0.0, 0.0],
-#                 [0.0, 1.0, 0.0],
-#                 [0.0, 0.0, 1.0]])
-
-# D_c = py.array([[0], [0], [0]])
-
-# B_dist = py.array([[0],
-#                    [1/j_eff],
-#                    [0]])
-
-# sys_c = ct.ss(A_c, B_c, C_c, D_c)
-# sys_d = sys_c.sample(dt, method='zoh')
-# B_dd = B_dist * dt
-
 # ==========================================
+# 3. STATE-SPACE MATRICES
+# ==========================================
+# FIXED: Using j_eff instead of j
+
+A_c = py.array([[0, 1 , 0],
+                [0, -b/j_eff, kt/j_eff],
+                [0, -ke/l, -r/l]])
+
+B_c = py.array([[0],   
+                [0],
+                [1/l]])
+
+C_c = py.array([[1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0]])
+
+D_c = py.array([[0], [0], [0]])
+
+B_dist = py.array([[0],
+                   [1/j_eff],
+                   [0]])
+
+sys_c = ct.ss(A_c, B_c, C_c, D_c)
+sys_d = sys_c.sample(dt, method='zoh')
+B_dd = B_dist * dt
+
 # 4. INITIALIZATION
-# ==========================================
+
 x = py.array([[0.0], [0.0], [0.0]]) # pos, omega, current
 
 
 
 # PID controller 
 pids = pid(kp=2.0, kd=0.5, ki=0.0)
-
 
 
 history_t = []
@@ -79,15 +77,13 @@ history_joint_pos = [] # We want to plot the joint angle, not the motor angle
 simulation_time = 10.0 
 steps = int(simulation_time / dt)
 
-# ==========================================
+
 # 5. SIMULATION LOOP
-# ==========================================
-print("Starting simulation...")
 
 for step in range(steps):
     current_time = step * dt
     
-    # 1. Kinematics: Convert motor position to joint position
+    # 1. kinematics: converting motor position to joint position
     motor_pos = x[0].item()
     joint_pos = motor_pos / N
     
@@ -101,7 +97,13 @@ for step in range(steps):
     # Torque felt by the motor (divided by gear ratio)
     tau_load_motor = tau_load_joint / N
     
+
+
+    
     # 3. Control Logic (PID)
+
+
+
     motor_setpoint = set_points[0] * N
     e = motor_setpoint - motor_pos
     v_cmd = pids.update(e, dt) 
@@ -124,9 +126,8 @@ for step in range(steps):
 
     # 5. Physics Engine Update
     x = sys_d.A @ x + sys_d.B * v_cmd + B_dd * tau_load_motor
-    # 5. Physics Engine Update
-    x = sys_d.A @ x + sys_d.B * v_cmd + B_dd * tau_load_motor
-    
+
+
     # 6. Log data for plotting
     history_t.append(current_time)
     history_joint_pos.append(joint_pos)

@@ -8,11 +8,11 @@ class AK80_6_Plant:
         self.dt = dt
         
     def step(self, tau_cmd):
-        # 1. Hardware Safety Limit (Cap torque at +/- 8 Nm for desktop safety)
+        # 1. Hardware Safety Limit (Cap torque at +/- 8 Nm)
         tau_actual = np.clip(tau_cmd, -8.0, 8.0)
         
         # 2. Realistic Mechanical Dynamics
-        J = 0.015  # Increased inertia to simulate the weight of the exoskeleton link
+        J = 0.015
         b = 0.1    # Viscous damping (friction that increases with speed)
         
         # Mild kinetic friction (simulates the internal gears/bearings)
