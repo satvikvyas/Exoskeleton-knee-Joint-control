@@ -1,0 +1,7 @@
+matplotlib
+pyserial
+numpy
+python-can
+control
+PyQt5
+pyqtgraph
