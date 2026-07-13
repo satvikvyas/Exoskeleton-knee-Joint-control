@@ -5,6 +5,7 @@ import queue
 import signal
 import importlib
 import threading
+from collections import deque
 # pyrefly: ignore [missing-import]
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QLabel, QLineEdit, QComboBox, QGroupBox, QGridLayout, QMessageBox, QRadioButton, QButtonGroup)
@@ -324,16 +325,17 @@ class MotorControlGUI(QMainWindow):
         self.motor_thread.telemetry_signal.connect(self.on_telemetry)
         self.motor_thread.error_signal.connect(self.show_error)
 
-        # Data Logging
+        # Data Logging — deque with maxlen auto-discards oldest entries in O(1)
         self.history_len = 500  # 5 seconds at 100Hz
-        self.times = []
-        self.data_pos = []
-        self.data_cur = []
-        self.data_erpm = []
-        self.data_target = []
+        self.times = deque(maxlen=self.history_len)
+        self.data_pos = deque(maxlen=self.history_len)
+        self.data_cur = deque(maxlen=self.history_len)
+        self.data_erpm = deque(maxlen=self.history_len)
+        self.data_target = deque(maxlen=self.history_len)
         self.start_time = time.time()
         self.current_pos = 0.0
         self.active_loop = None
+        self._csv_flush_counter = 0  # Batch CSV flushes
 
         # Setup CSV Logging
         if not os.path.exists("logs"):
@@ -745,13 +747,7 @@ class MotorControlGUI(QMainWindow):
         elif self.motor_thread.current_target_type == 'cur':
             target_val = abs(target_val) * self.kt
         self.data_target.append(target_val)
-
-        if len(self.times) > self.history_len:
-            self.times.pop(0)
-            self.data_pos.pop(0)
-            self.data_cur.pop(0)
-            self.data_erpm.pop(0)
-            self.data_target.pop(0)
+        # deque with maxlen auto-discards oldest — no manual pop needed
             
         self.live_telemetry_label.setText(f"Pos: {pos_mod:.2f} deg | Cur: {current:.2f} A | ERPM: {erpm:.0f}")
         self.actual_torque_label.setText(f"Actual Torque: {actual_torque_nm:.3f} Nm  ({current:.3f} A)")
@@ -784,31 +780,36 @@ class MotorControlGUI(QMainWindow):
                 f"{t_data['pos_deg']:.4f}"
             ]
             self.csv_writer.writerow(row)
-            self.log_file.flush()
+            # Flush to disk every ~1 second (100 ticks) instead of every tick
+            self._csv_flush_counter += 1
+            if self._csv_flush_counter >= 100:
+                self.log_file.flush()
+                self._csv_flush_counter = 0
 
     def update_plot(self):
         mode = self.graph_selector.currentIndex()
+        # Convert deques to lists once for pyqtgraph (it needs sequences)
+        t = list(self.times)
+        tgt = list(self.data_target)
+        
         if mode == 0:  # Position
-            self.plot_curve.setData(self.times, self.data_pos)
-            self.plot_widget.setLabel('left', 'Position', units='deg')
+            self.plot_curve.setData(t, list(self.data_pos))
             if self.motor_thread.current_target_type in ('pos', 'pos_raw', 'pos_direct'):
-                self.target_curve.setData(self.times, self.data_target)
+                self.target_curve.setData(t, tgt)
             else:
                 self.target_curve.setData([], [])
                 
         elif mode == 1:  # Current
-            self.plot_curve.setData(self.times, self.data_cur)
-            self.plot_widget.setLabel('left', 'Current', units='A')
+            self.plot_curve.setData(t, list(self.data_cur))
             if self.motor_thread.current_target_type == 'cur':
-                self.target_curve.setData(self.times, self.data_target)
+                self.target_curve.setData(t, tgt)
             else:
                 self.target_curve.setData([], [])
                 
         elif mode == 2:  # Speed
-            self.plot_curve.setData(self.times, self.data_erpm)
-            self.plot_widget.setLabel('left', 'Speed', units='ERPM')
+            self.plot_curve.setData(t, list(self.data_erpm))
             if self.motor_thread.current_target_type in ('vel', 'vel_raw'):
-                self.target_curve.setData(self.times, self.data_target)
+                self.target_curve.setData(t, tgt)
             else:
                 self.target_curve.setData([], [])
 
