@@ -46,6 +46,7 @@ htmlcov/
 # Environments
 .env
 .venv
+.venv/
 env/
 venv/
 ENV/
@@ -57,6 +58,14 @@ venv.bak/
 .idea/
 *.swp
 *.swo
+
+# OS files
+.DS_Store
+
+# Data files
+*.mat
+*.bag
+*.bin
 
 # Project specific ignores
 logs/
